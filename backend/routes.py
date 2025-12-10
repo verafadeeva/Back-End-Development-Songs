@@ -89,3 +89,25 @@ def create_song():
     answer = db.songs.insert_one(data)
     response_data = {"inserted id": answer.inserted_id}
     return Response(json_util.dumps(response_data), mimetype='application/json', status=201)
+
+
+@app.route("/song/<int:song_id>", methods=["PUT"])
+def update_song(song_id):
+    data = request.json
+    song = db.songs.find_one({"id": song_id})
+    if song is not None:
+        result = db.songs.update_one({"id": song_id}, {"$set": data})
+        if result.modified_count == 0:
+            return {"message": "song found, but nothing updated"}
+        else:
+            song = db.songs.find_one({"id": song_id})
+            return json_util.dumps(song), 201
+    return {"message": "song not found"}, 404
+
+
+@app.route("/song/<int:song_id>", methods=["DELETE"])
+def delete_song(song_id):
+    result = db.songs.delete_one({"id": song_id})
+    if result.deleted_count == 0:
+        return {"message": "song not found"}, 404
+    return Response(status=204)
