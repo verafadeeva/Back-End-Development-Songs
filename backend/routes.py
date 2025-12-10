@@ -66,14 +66,26 @@ def count_songs():
 @app.route("/songs")
 def get_all_songs():
     songs = list(db.songs.find({}))
-    json_data = json_util.dumps(songs)
-    return Response(json_data, mimetype='application/json')
+    response_data = {"songs": songs}
+    return Response(json_util.dumps(response_data), mimetype='application/json')
 
 
-@app.route("/song/<id>")
+@app.route("/song/<int:song_id>")
 def get_song_by_id(song_id):
-    song = db.songs.find_one({"id": id})
-    for song in songs:
-        _id = str(song["_id"])
-        song["_id"] = _id
-    return {"songs": songs}
+    song = db.songs.find_one({"id": song_id})
+    if not song:
+        return {"message": "song with id not found"}, 404
+    response_data = {"song": song}
+    return Response(json_util.dumps(response_data), mimetype='application/json')
+
+
+@app.route("/song", methods=["POST"])
+def create_song():
+    data = request.json
+    song = db.songs.find_one({"id": data["id"]})
+    if song is not None:
+        return {"Message": f"song with id {song['id']} already present"}, 302
+
+    answer = db.songs.insert_one(data)
+    response_data = {"inserted id": answer.inserted_id}
+    return Response(json_util.dumps(response_data), mimetype='application/json', status=201)
