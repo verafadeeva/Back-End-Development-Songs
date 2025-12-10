@@ -2,7 +2,7 @@ from . import app
 import os
 import json
 import pymongo
-from flask import jsonify, request, make_response, abort, url_for  # noqa; F401
+from flask import jsonify, request, Response, make_response, abort, url_for  # noqa; F401
 from pymongo import MongoClient
 from bson import json_util
 from pymongo.errors import OperationFailure
@@ -51,3 +51,29 @@ def parse_json(data):
 ######################################################################
 # INSERT CODE HERE
 ######################################################################
+
+@app.route("/health")
+def check_health():
+    return {"status": "OK"}
+
+
+@app.route("/count")
+def count_songs():
+    songs_cnt = db.songs.count_documents({})
+    return {"count": songs_cnt}
+
+
+@app.route("/songs")
+def get_all_songs():
+    songs = list(db.songs.find({}))
+    json_data = json_util.dumps(songs)
+    return Response(json_data, mimetype='application/json')
+
+
+@app.route("/song/<id>")
+def get_song_by_id(song_id):
+    song = db.songs.find_one({"id": id})
+    for song in songs:
+        _id = str(song["_id"])
+        song["_id"] = _id
+    return {"songs": songs}
